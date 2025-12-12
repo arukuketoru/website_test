@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>為替レート変換</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .converter-box {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        input,
+        select,
+        button {
+            padding: 10px;
+            margin: 5px 0;
+            font-size: 16px;
+        }
+
+        .result {
+            font-size: 1.5em;
+            color: #007bff;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .rate-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .error {
+            color: red;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>為替レート変換</h1>
+
+    <div class="converter-box">
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <div>
+                <label>金額:</label><br>
+                <input type="number" name="amount" value="{{ amount }}" step="0.01" required>
+            </div>
+
+            <div>
+                <label>変換元 (From):</label><br>
+                <select name="from_currency">
+                    {% for curr in currencies %}
+                    <option value="{{ curr }}" {% if curr==from_currency %}selected{% endif %}>{{ curr }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>変換先 (To):</label><br>
+                <select name="to_currency">
+                    {% for curr in currencies %}
+                    <option value="{{ curr }}" {% if curr==to_currency %}selected{% endif %}>{{ curr }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">計算する</button>
+        </form>
+
+        {% if result %}
+        <div class="result">
+            {{ "{:,.2f}".format(amount) }} {{ from_currency }} = <br>
+            {{ "{:,.2f}".format(result) }} {{ to_currency }}
+        </div>
+        <p class="rate-info">現在のレート: 1 {{ from_currency }} = {{ "{:,.4f}".format(rate) }} {{ to_currency }}</p>
+        {% endif %}
+    </div>
+
+    <a href="/">← ホームに戻る</a>
+
+</body>
+
+</html>

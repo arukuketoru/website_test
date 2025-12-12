@@ -148,6 +148,57 @@ def search_index():
     # 'GET'リクエスト（初期アクセス）の場合、resultsは空のまま渡される
     return render_template('index.html', keywords = keywords,results=results)
 
+@app.route('/currency', methods=['GET', 'POST'])
+def currency_converter():
+    # デフォルト値の設定
+    amount = 1000
+    from_currency = 'USD'
+    to_currency = 'JPY'
+    result = None
+    rate = None
+    error = None
+
+    if request.method == 'POST':
+        try:
+            # フォームから値を取得
+            amount = float(request.form['amount'])
+            from_currency = request.form['from_currency']
+            to_currency = request.form['to_currency']
+
+            # 外部API (Frankfurter) にリクエストを送信
+            # URL例: https://api.frankfurter.app/latest?amount=10&from=USD&to=JPY
+            api_url = f"https://api.frankfurter.app/latest?amount={amount}&from={from_currency}&to={to_currency}"
+            
+            response = requests.get(api_url)
+            response.raise_for_status() # エラーチェック
+            
+            data = response.json()
+            
+            # 結果を取り出す
+            if to_currency in data['rates']:
+                result = data['rates'][to_currency]
+                # 1単位あたりのレートも計算しておく
+                rate = result / amount
+            else:
+                error = "指定された通貨のデータを取得できませんでした。"
+
+        except ValueError:
+            error = "金額には数値を入力してください。"
+        except Exception as e:
+            error = f"エラーが発生しました: {e}"
+
+    # 通貨リスト（選択肢用）
+    currencies = ['JPY', 'USD', 'EUR', 'GBP', 'AUD', 'CAD', 'KRW', 'CNY']
+
+    return render_template('currency.html', 
+                           amount=amount, 
+                           from_currency=from_currency, 
+                           to_currency=to_currency, 
+                           result=result, 
+                           rate=rate,
+                           currencies=currencies,
+                           error=error)
+
 if __name__ == '__main__':
     # 開発用サーバーを起動 (外部公開用ではない)
     # debug=True にすると、コード変更時に自動で再起動されます
