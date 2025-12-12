@@ -125,9 +125,15 @@ def parse_scholar_html(html_content):
             
     return results
 
-# --- Webサイトのルート設定 ---
-@app.route('/', methods=['GET', 'POST'])
-def index():
+#Webサイトのルート設定
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+
+@app.route('/search', methods=['GET', 'POST'])
+def search_index():
+    keywords = ""
     results = []
     
     if request.method == 'POST':
@@ -140,7 +146,7 @@ def index():
             
     # 結果（results）を 'index.html' に渡して表示させる
     # 'GET'リクエスト（初期アクセス）の場合、resultsは空のまま渡される
-    return render_template('index.html', results=results)
+    return render_template('index.html', keywords = keywords,results=results)
 
 if __name__ == '__main__':
     # 開発用サーバーを起動 (外部公開用ではない)
