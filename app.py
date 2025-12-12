@@ -74,7 +74,7 @@ def search_scholar(keywords):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"}
 
     try:
-        time.sleep(random.uniform(8, 16))#リクエスト間隔短くしすぎるとgoogleにブロックされる
+        time.sleep(random.uniform(20, 30))#リクエスト間隔短くしすぎるとgoogleにブロックされる
         res = requests.get(url, headers=headers)
         res.raise_for_status()
         html_content=res.text
