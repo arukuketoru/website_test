@@ -1,4 +1,5 @@
-#google検索の検索ワードを入力し, タイトルとURLの一覧を出力
+#flaskを使用した簡易的なウェブサイト
+#the code making simple website with flask
 
 from flask import Flask, render_template, request
 from bs4 import BeautifulSoup

@@ -4,10 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <title>論文検索サイト</title>
+    <style>
+        h6 {
+            font-size: 1.0rem;
+            color: crimson;
+            margin-bottom: 20px;
+            border-bottom: 7px double #666;
+        }
+    </style>
 </head>
 
 <body>
+    <a href="/" class="home-link">← ホームに戻る</a>
     <h1>論文検索</h1>
+    <h6>現在こちらの機能は利用できません</h6>
 
     <form method="POST" action="/search">
         <input type="text" name="keywords" placeholder="検索ワードを入力" required>
