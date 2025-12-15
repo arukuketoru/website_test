@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>明るい元素周期表</title>
+    <style>
+        /* 全体のデザイン：明るく、柔らかい雰囲気 */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #fdfcf8;
+            /* 暖かみのあるオフホワイト */
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #ff8c00;
+            /* 明るいオレンジ */
+        }
+
+        a.home-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        /* 周期表のグリッドレイアウト */
+        .periodic-table-grid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            /* 18列 */
+            grid-template-rows: repeat(10, 1fr);
+            /* 7周期 + 欄外2行 + 間隔 */
+            gap: 5px;
+            max-width: 1200px;
+            margin: 0 auto 50px auto;
+            /* 下に余白 */
+        }
+
+        /* 元素セル（カード）のデザイン */
+        .element-cell {
+            aspect-ratio: 1 / 1;
+            /* 正方形を保つ */
+            border-radius: 8px;
+            padding: 5px;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .element-cell:hover {
+            transform: translateY(-3px);
+            /* ホバー時に少し浮き上がる */
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+
+        .cell-number {
+            font-size: 0.7em;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            opacity: 0.7;
+        }
+
+        .cell-symbol {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .cell-name {
+            font-size: 0.6em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 分類ごとの明るい色分け */
+        .cat-nonmetal {
+            background-color: #a8e6cf;
+        }
+
+        /* 非金属：ミントグリーン */
+        .cat-noble-gas {
+            background-color: #dcedc1;
+        }
+
+        /* 希ガス：ライトグリーン */
+        .cat-alkali {
+            background-color: #ffaaa5;
+        }
+
+        /* アルカリ金属：サーモンピンク */
+        .cat-alkaline-earth {
+            background-color: #ffd3b6;
+        }
+
+        /* アルカリ土類：ライトオレンジ */
+        .cat-metalloid {
+            background-color: #fff5ba;
+        }
+
+        /* 半金属：クリームイエロー */
+        .cat-halogen {
+            background-color: #ace7ef;
+        }
+
+        /* ハロゲン：ライトブルー */
+        .cat-transition {
+            background-color: #c7ceea;
+        }
+
+        /* 遷移金属：ラベンダー */
+        .cat-other-metal {
+            background-color: #e2f0cb;
+        }
+
+        /* その他の金属 */
+        .cat-lanthanoid {
+            background-color: #ffc3a0;
+        }
+
+        /* ランタノイド：ピーチ */
+        .cat-actinoid {
+            background-color: #ff9a9e;
+        }
+
+        /* アクチノイド：ピンク */
+
+        /* 詳細説明セクション */
+        .details-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .element-detail-card {
+            /* ページ内リンクのターゲット位置を調整（ヘッダーに隠れないように） */
+            scroll-margin-top: 20px;
+
+            background-color: #fff;
+            border-left: 5px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 詳細カードの左線の色も合わせる */
+        .detail-nonmetal {
+            border-color: #a8e6cf;
+        }
+
+        .detail-noble-gas {
+            border-color: #dcedc1;
+        }
+
+        /* ... (他の色も同様に定義可能) ... */
+
+        .detail-header {
+            display: flex;
+            align-items: baseline;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .detail-symbol {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-right: 10px;
+            color: #555;
+        }
+
+        .detail-name {
+            font-size: 1.5em;
+        }
+
+        .detail-no {
+            margin-left: auto;
+            font-size: 1.2em;
+            color: #888;
+        }
+
+        /* ランタノイド・アクチノイドのラベル用 */
+        .placeholder {
+            grid-column: 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <a href="/" class="home-link">← ホームに戻る</a>
+    <h1>化学の元素周期表</h1>
+    <p>元素をクリックすると、その元素の説明までスクロールします。</p>
+
+    <div class="periodic-table-grid">
+        <div class="placeholder" style="grid-row: 6;">57-71<br>La-Lu</div>
+        <div class="placeholder" style="grid-row: 7;">89-103<br>Ac-Lr</div>
+
+        {% for el in elements %}
+        <a href="#element-{{ el.no }}" class="element-cell cat-{{ el.cat }}"
+            style="grid-column: {{ el.col }}; grid-row: {{ el.row }};">
+            <span class="cell-number">{{ el.no }}</span>
+            <span class="cell-symbol">{{ el.sym }}</span>
+            <span class="cell-name">{{ el.name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <div class="details-container">
+        <h2>元素の詳細説明</h2>
+        {% for el in elements %}
+        <div id="element-{{ el.no }}" class="element-detail-card detail-{{ el.cat }}">
+            <div class="detail-header">
+                <span class="detail-symbol">{{ el.sym }}</span>
+                <span class="detail-name">{{ el.name }}</span>
+                <span class="detail-no">No. {{ el.no }}</span>
+            </div>
+            <p>{{ el.desc }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+</body>
+
+</html>
