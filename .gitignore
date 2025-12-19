@@ -1,0 +1,15 @@
+# 仮想環境(venv)を無視
+venv/
+.venv/
+env/
+
+# Pythonのキャッシュファイルを無視
+__pycache__/
+*.pyc
+
+# データベースファイルを無視（必要に応じて）
+scholar_cache.db
+
+# アップロードされた画像を無視（個人の顔写真を上げないため）
+static/uploads/*
+!static/uploads/.gitkeep
