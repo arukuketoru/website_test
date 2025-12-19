@@ -1,13 +1,21 @@
 #flaskを使用した簡易的なウェブサイト
 #the code making simple website with flask
+#webサイトの練習用(眼鏡は公開するかも)
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify, url_for # jsonifyとurl_forを追加
 from bs4 import BeautifulSoup
 import requests
 import random
 import time
 import sqlite3
 import datetime
+#以下眼鏡実装用に追加
+import os
+import cv2
+import numpy as np
+import mediapipe as mp
+from PIL import Image
+from werkzeug.utils import secure_filename
 
 #データベース作成(キャッシュ用)
 DATABASE = 'scholar_cache.db'
@@ -359,13 +367,231 @@ def get_elements_data():
         {"no": 103, "sym": "Lr", "name": "ローレンシウム", "col": 17, "row": 10, "cat": "actinoid", "desc": "最も重いアクチノイド。"}
     ]
 
-    # 番号順にソート（念のため）
+    # ソート（多分いらん）
     elements.sort(key=lambda x: x['no'])
 
     return elements
 
 
+#以下眼鏡用に作成(後日解説入れる)
+# アップロード画像の保存先
+UPLOAD_FOLDER = 'static/uploads'
+# フォルダがなければ作成
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# 利用可能な眼鏡リストと、顔型との対応
+GLASSES_DATABASE = [
+    {"id": "square", "name": "スクエア", "file": "square.png", "target": "丸顔"},
+    {"id": "round", "name": "ラウンド", "file": "round.png", "target": "四角顔"},
+    {"id": "boston", "name": "ボストン", "file": "boston.png", "target": "面長"},
+    {"id": "wellington", "name": "ウェリントン", "file": "wellington.png", "target": "面長"},
+    {"id": "oval", "name": "オーバル", "file": "oval.png", "target": "逆三角形"},
+]
+
+def get_face_landmarks(image_path):
+    """顔のランドマークのみを取得するヘルパー関数"""
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5
+    )
+    
+    image = cv2.imread(image_path)
+    if image is None:
+        return None
+    
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(image_rgb)
+
+    if results.multi_face_landmarks:
+        return results.multi_face_landmarks[0].landmark
+    return None
+
+def overlay_glasses(face_image_path, glasses_image_path, output_path):
+    """顔画像に眼鏡を合成して保存する関数"""
+    
+    # MediaPipeの顔メッシュ検出器を初期化
+    mp_face_mesh = mp.solutions.face_mesh
+    face_mesh = mp_face_mesh.FaceMesh(
+        static_image_mode=True,
+        max_num_faces=1,
+        refine_landmarks=True,
+        min_detection_confidence=0.5
+    )
+
+    # 画像を読み込み (OpenCV -> Pillow)
+    image = cv2.imread(face_image_path)
+    if image is None: return False
+    
+    # 色変換 (BGR -> RGB)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(image_rgb)
+
+    # 顔が検出されなかった場合
+    if not results.multi_face_landmarks: return False
+
+    # Pillow形式に変換（合成作業用）
+    pil_image = Image.fromarray(image_rgb)
+
+    # 眼鏡画像が存在するか確認
+    if not os.path.exists(glasses_image_path):
+        print(f"Error: Glasses image not found at {glasses_image_path}")
+        return False
+
+    glasses = Image.open(glasses_image_path).convert("RGBA")
+
+    # 検出されたランドマークを取得
+    landmarks = results.multi_face_landmarks[0].landmark
+    h, w, _ = image.shape
+
+    # 左目(33) と 右目(263) の座標を取得（MediaPipeの特定ID）
+    left_eye = landmarks[33]
+    right_eye = landmarks[263]
+
+    # 座標をピクセル単位に変換
+    le_x, le_y = int(left_eye.x * w), int(left_eye.y * h)
+    re_x, re_y = int(right_eye.x * w), int(right_eye.y * h)
+
+    # 1. 回転角度を計算
+    delta_x = re_x - le_x
+    delta_y = re_y - le_y
+    angle = np.degrees(np.arctan2(delta_y, delta_x))
+    # 眼鏡画像を回転（Pillowは時計回りがマイナスなので調整）
+    rotated_glasses = glasses.rotate(-angle, expand=True, resample=Image.BICUBIC)
+
+    # 2. サイズ調整
+    eye_distance = np.sqrt(delta_x**2 + delta_y**2)
+    # 眼鏡の幅を、目の距離の約2.5倍に設定（調整可能）
+    glasses_width = int(eye_distance * 2.5)
+    # アスペクト比を維持して高さを計算
+    aspect_ratio = rotated_glasses.height / rotated_glasses.width
+    glasses_height = int(glasses_width * aspect_ratio)
+    
+    resized_glasses = rotated_glasses.resize((glasses_width, glasses_height), Image.LANCZOS)
+
+    # 3. 位置調整
+    # 両目の中点
+    center_x = (le_x + re_x) // 2
+    center_y = (le_y + re_y) // 2
+    
+    # 眼鏡画像の貼り付け位置（左上座標）を計算
+    paste_x = center_x - glasses_width // 2
+    paste_y = center_y - glasses_height // 2 
+
+    # 合成（マスクを使用して透過部分を処理）
+    pil_image.paste(resized_glasses, (paste_x, paste_y), resized_glasses)
+
+    # 保存
+    pil_image.save(output_path)
+    return True
+
+def analyze_face_shape(landmarks):
+    """顔のランドマークから顔型を簡易判定する"""
+    if not landmarks: return "不明", None
+
+    # 各部位の座標を取得 (MediaPipeのインデックス)
+    top = landmarks[10]    # おでこ上部
+    bottom = landmarks[152] # あご先
+    left = landmarks[234]   # 左頬
+    right = landmarks[454]  # 右頬
+    
+    # 顔の縦の長さと横の幅を計算
+    face_height = bottom.y - top.y
+    face_width = right.x - left.x
+
+    # ゼロ除算回避
+    if face_width == 0: return "不明", None
+
+    ratio = face_height / face_width
+
+    # 簡易的な判定ロジック
+    if ratio > 1.5:
+        return "面長", "wellington.png"  # 上下幅のある眼鏡
+    elif ratio < 1.2:
+        return "丸顔", "square.png"      # 角のある眼鏡
+    else:
+        # あごの細さをチェック（逆三角判定）
+        jaw_left = landmarks[132]
+        jaw_right = landmarks[361]
+        jaw_width = jaw_right.x - jaw_left.x
+        if jaw_width / face_width < 0.7:
+            return "逆三角形"  # 丸みのある眼鏡
+        else:
+            return "四角顔"     # 柔らかい印象の眼鏡
+
+
+@app.route('/glasses-tryon', methods=['GET', 'POST'])
+def glasses_tryon():
+    result_image = None
+    error = None
+    # POSTリクエスト（画像アップロード時）
+    if request.method == 'POST':
+        file = request.files['file']
+        # 画像がアップロードされているか確認
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(upload_path)
+
+            # 1. ここでまずランドマークを取得する
+            landmarks = get_face_landmarks(upload_path)
+
+            if landmarks:
+                # 2. 顔型診断を実行
+                face_shape = analyze_face_shape(landmarks)
+                
+                # 3. 診断結果に基づいておすすめフラグを立てる
+                for g in GLASSES_DATABASE:
+                    g['is_recommended'] = (g['target'] == face_shape)
+
+                # 4. 診断結果とリストを渡して画面を表示（まだ合成はしない）
+                return render_template('glasses.html', 
+                                       original_image=filename, 
+                                       face_shape=face_shape, 
+                                       glasses_list=GLASSES_DATABASE)
+            else:
+                return render_template('glasses.html', error="顔を検出できませんでした。")
+        else:
+             return render_template('glasses.html', error="ファイルが選択されていません。")
+
+    # GETリクエスト（最初のアクセス）
+    return render_template('glasses.html')
+
+@app.route('/apply-glasses', methods=['POST'])
+def apply_glasses():
+    """ユーザーが選んだ眼鏡を合成するAPI"""
+    data = request.json
+    image_filename = data.get('image')
+    glasses_id = data.get('glasses_id')
+
+    if not image_filename or not glasses_id:
+        return jsonify({"success": False, "error": "データが不足しています"})
+    
+    # 選択された眼鏡のファイル名を取得
+    glass_info = next(g for g in GLASSES_DATABASE if g['id'] == glasses_id)
+    if not glass_info:
+        return jsonify({"success": False, "error": "指定された眼鏡が見つかりません"})
+    
+    glasses_path = os.path.join('static/glasses', glass_info['file'])
+    face_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+    
+    result_filename = f"result_{glasses_id}_{image_filename}"
+    output_path = os.path.join(app.config['UPLOAD_FOLDER'], result_filename)
+
+    # 合成処理実行 (以前作成した overlay_glasses 関数)
+    success = overlay_glasses(face_path, glasses_path, output_path)
+
+    if success:
+        return jsonify({"success": True, "result_url": url_for('static', filename='uploads/' + result_filename)})
+    else:
+        return jsonify({"success": False, "error": "合成に失敗しました"})
+
+#デバッグ
 if __name__ == '__main__':
-    # 開発用サーバーを起動 (外部公開用ではない)
-    # debug=True にすると、コード変更時に自動で再起動されます
-    app.run(debug=True)
+    # 開発用サーバーを起動 (外部用ではない)
+    app.run(debug=True)#bebug on コード変更時に自動で再起動
+    #app.run(debug=False)
