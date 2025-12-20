@@ -1,6 +1,26 @@
-#flaskを使用した簡易的なウェブサイト
+#flaskを使用した簡易的なウェブサイト(とりあえず機能追加するときはライブラリのバージョン確認必須)
 #the code making simple website with flask
 #webサイトの練習用(眼鏡は公開するかも)
+
+"""
+requirments.txtの中身はこんな感じ(何か追加するときはライブラリの依存関係に注意)
+
+Flask
+gunicorn
+requests
+beautifulsoup4
+mediapipe==0.10.11
+Pillow
+numpy<2.0.0
+opencv-python-headless<4.9.0
+werkzeug
+"""
+
+"""
+依存でエラー出るし、このPCから最新のnumpy消したくないから、
+venv使って仮想環境で実行
+これで実行できる.\venv\Scripts\activate
+"""
 
 from flask import Flask, render_template, request, jsonify, url_for # jsonifyとurl_forを追加
 from bs4 import BeautifulSoup
@@ -9,11 +29,13 @@ import random
 import time
 import sqlite3
 import datetime
-#以下眼鏡実装用に追加
+#以下眼鏡実装用に追加(ライブラリのバージョンが厄介)(依存関係多すぎてやばい)
 import os
 import cv2
-import numpy as np
+import numpy as np #numpy2.x系だと動かない(mediapipeやtensorflowが動かないから)
 import mediapipe as mp
+#print("MediaPipeの位置:", mp.__file__)#ファイル名ダブりでエラーが出たのかの確認
+#print("中身の確認:", dir(mp))#バージョン違うかの確認
 from PIL import Image
 from werkzeug.utils import secure_filename
 
@@ -375,7 +397,13 @@ def get_elements_data():
 
 #以下眼鏡用に作成(後日解説入れる)
 # アップロード画像の保存先
-UPLOAD_FOLDER = 'static/uploads'
+#UPLOAD_FOLDER = 'static/uploads'
+
+#render上でのプログラムからフォルダを作成する際の権限エラー回避用
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER, mode=0o777, exist_ok=True) # 権限を明示
+
 # フォルダがなければ作成
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -390,7 +418,7 @@ GLASSES_DATABASE = [
     {"id": "oval", "name": "オーバル", "file": "oval.png", "target": "逆三角形"},
 ]
 
-def get_face_landmarks(image_path):
+def get_landmarks(image_path):
     """顔のランドマークのみを取得するヘルパー関数"""
     mp_face_mesh = mp.solutions.face_mesh
     face_mesh = mp_face_mesh.FaceMesh(
@@ -466,7 +494,8 @@ def overlay_glasses(face_image_path, glasses_image_path, output_path):
     # 2. サイズ調整
     eye_distance = np.sqrt(delta_x**2 + delta_y**2)
     # 眼鏡の幅を、目の距離の約2.5倍に設定（調整可能）
-    glasses_width = int(eye_distance * 2.5)
+    # ↓ 2.5 を 1.8 〜 2.1 くらいに下げると自然になります
+    glasses_width = int(eye_distance * 1.8)
     # アスペクト比を維持して高さを計算
     aspect_ratio = rotated_glasses.height / rotated_glasses.width
     glasses_height = int(glasses_width * aspect_ratio)
@@ -483,10 +512,19 @@ def overlay_glasses(face_image_path, glasses_image_path, output_path):
     paste_y = center_y - glasses_height // 2 
 
     # 合成（マスクを使用して透過部分を処理）
-    pil_image.paste(resized_glasses, (paste_x, paste_y), resized_glasses)
+    # --- 修正前 ---
+    # pil_image.paste(resized_glasses, (paste_x, paste_y), resized_glasses)
+
+    # --- 修正後 ---
+    # 1. 貼り付け先と同じサイズの透明なレイヤーを作る
+    overlay = Image.new('RGBA', pil_image.size, (0, 0, 0, 0))
+    overlay.paste(resized_glasses, (paste_x, paste_y))
+
+    # 2. アルファチャンネルを使って合成する
+    pil_image = Image.alpha_composite(pil_image.convert('RGBA'), overlay)
 
     # 保存
-    pil_image.save(output_path)
+    pil_image.save(output_path, format="PNG")
     return True
 
 def analyze_face_shape(landmarks):
@@ -519,9 +557,9 @@ def analyze_face_shape(landmarks):
         jaw_right = landmarks[361]
         jaw_width = jaw_right.x - jaw_left.x
         if jaw_width / face_width < 0.7:
-            return "逆三角形"  # 丸みのある眼鏡
+            return ("逆三角形", "oval.png")  # 丸みのある眼鏡
         else:
-            return "四角顔"     # 柔らかい印象の眼鏡
+            return ("四角顔", "round.png")    # 柔らかい印象の眼鏡
 
 
 @app.route('/glasses-tryon', methods=['GET', 'POST'])
@@ -538,28 +576,28 @@ def glasses_tryon():
             file.save(upload_path)
 
             # 1. ここでまずランドマークを取得する
-            landmarks = get_face_landmarks(upload_path)
+            landmarks = get_landmarks(upload_path)
 
             if landmarks:
                 # 2. 顔型診断を実行
-                face_shape = analyze_face_shape(landmarks)
+                res_tuple = analyze_face_shape(landmarks)
                 
                 # 3. 診断結果に基づいておすすめフラグを立てる
                 for g in GLASSES_DATABASE:
-                    g['is_recommended'] = (g['target'] == face_shape)
+                    g['is_recommended'] = (g['target'] == res_tuple[0])
 
                 # 4. 診断結果とリストを渡して画面を表示（まだ合成はしない）
-                return render_template('glasses.html', 
+                return render_template('glasses_test.html', 
                                        original_image=filename, 
-                                       face_shape=face_shape, 
+                                       face_shape=res_tuple, 
                                        glasses_list=GLASSES_DATABASE)
             else:
-                return render_template('glasses.html', error="顔を検出できませんでした。")
+                return render_template('glasses_test.html', error="顔を検出できませんでした。")
         else:
-             return render_template('glasses.html', error="ファイルが選択されていません。")
+             return render_template('glasses_test.html', error="ファイルが選択されていません。")
 
     # GETリクエスト（最初のアクセス）
-    return render_template('glasses.html')
+    return render_template('glasses_test.html')
 
 @app.route('/apply-glasses', methods=['POST'])
 def apply_glasses():
@@ -576,7 +614,8 @@ def apply_glasses():
     if not glass_info:
         return jsonify({"success": False, "error": "指定された眼鏡が見つかりません"})
     
-    glasses_path = os.path.join('static/glasses', glass_info['file'])
+    #glasses_path = os.path.join('static/glasses', glass_info['file'])#これだとosに依存する書き方でダメな時がある
+    glasses_path = os.path.join('static', 'glasses', glass_info['file'])
     face_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
     
     result_filename = f"result_{glasses_id}_{image_filename}"

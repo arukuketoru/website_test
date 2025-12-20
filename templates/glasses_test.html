@@ -179,8 +179,14 @@
         {% else %}
 
         <div class="diagnostic-res">
-            AI診断：あなたの顔型は <strong>「{{ face_shape }}」</strong> です。<br>
+            AI診断：あなたの顔型は <strong>「{{ face_shape[0] }}」</strong> です。<br>
             <small>※★マークの眼鏡がおすすめされています</small>
+        </div>
+
+        <div class="recommendation"
+            style="margin-top: 20px; border: 2px solid #ffd54f; background-color: #fffde7; padding: 15px; border-radius: 10px;">
+            <p><strong>あなたに似合うおすすめの眼鏡：</strong></p>
+            <img src="{{ url_for('static', filename='glasses/' + face_shape[1]) }}" width="150">
         </div>
 
         <div class="main-layout">
