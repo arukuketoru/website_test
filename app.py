@@ -27,7 +27,7 @@ from bs4 import BeautifulSoup
 import requests
 import random
 import time
-import sqlite3
+import sqlite3 #データベース用
 import datetime
 #以下眼鏡実装用に追加(ライブラリのバージョンが厄介)(依存関係多すぎてやばい)
 import os
@@ -40,6 +40,8 @@ from PIL import Image
 from werkzeug.utils import secure_filename
 
 #データベース作成(キャッシュ用)
+#カレントディレクトリに拡張子.dbを作成
+#すでにあればそれにアクセスできる
 DATABASE = 'scholar_cache.db'
 # キャッシュの有効期間
 CACHE_DURATION_HOURS = 24 #24時間保持
