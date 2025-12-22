@@ -20,10 +20,17 @@ werkzeug
 依存でエラー出るし、このPCから最新のnumpy消したくないから、
 venv使って仮想環境で実行
 これで実行できる.\venv\Scripts\activate
+コマンドには python venv venv
+venvはコミットしないため、.gitignore作成
+gitとrenderの使い方→
+・git add . 全てのファイルgitに入れるための準備（ネットショッピングで購入前にカゴに入れる感じ）
+・git commit -m "explain" ここで変更内容をローカルリポジトリに記録（この状況では他の人はまだ変更されたかわからない）
+・git push origin main ローカルにコミットしたものをリモートリポジトリに保存する。
+・renderではgitに保存したら自動的に更新してdeployされるようになっている
 """
 
-from flask import Flask, render_template, request, jsonify, url_for # jsonifyとurl_forを追加
-from bs4 import BeautifulSoup
+from flask import Flask, render_template, request, jsonify, url_for #Third-party library of web flamework
+from bs4 import BeautifulSoup #A tool that parses "tag soup" into a clean structure
 import requests
 import random
 import time
