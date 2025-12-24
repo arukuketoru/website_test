@@ -435,7 +435,9 @@ GLASSES_DATABASE = [
 
 def get_landmarks(image_path):
     """顔のランドマークのみを取得するヘルパー関数"""
-    mp_face_mesh = mp.solutions.face_mesh
+    #mp_face_mesh = mp.solutions.face_mesh
+    #ここ何回も上手くいかないから直接アクセスに変更
+    from mediapipe.python.solutions import face_mesh as mp_face_mesh
     face_mesh = mp_face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,
@@ -458,7 +460,9 @@ def overlay_glasses(face_image_path, glasses_image_path, output_path):
     """顔画像に眼鏡を合成して保存する関数"""
     
     # MediaPipeの顔メッシュ検出器を初期化
-    mp_face_mesh = mp.solutions.face_mesh
+    #mp_face_mesh = mp.solutions.face_mesh
+    #ここ何回も上手くいかないから直接アクセスに変更
+    from mediapipe.python.solutions import face_mesh as mp_face_mesh
     face_mesh = mp_face_mesh.FaceMesh(
         static_image_mode=True,
         max_num_faces=1,
