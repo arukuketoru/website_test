@@ -71,6 +71,12 @@ def init_db():
     conn.commit()
     conn.close()
 
+print("--- MediaPipe Debug Info ---")
+print(f"Version: {mp.__version__}")
+print(f"File Path: {mp.__file__}")
+print(f"Has solutions: {hasattr(mp, 'solutions')}")
+print("----------------------------")
+
 # Flaskアプリケーションの初期化(インスタンス作成)
 app = Flask(__name__)
 # アプリケーション起動時にdbを初期化
