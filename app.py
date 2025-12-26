@@ -450,6 +450,9 @@ def get_landmarks(image_path):
         return None
     
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #↑ここでimgは不要になるので、↓で消す
+    del image #OpenCV形式のファイルを消した
+
     results = face_mesh.process(image_rgb)
 
     if results.multi_face_landmarks:
@@ -483,6 +486,8 @@ def overlay_glasses(face_image_path, glasses_image_path, output_path):
 
     # Pillow形式に変換（合成作業用）
     pil_image = Image.fromarray(image_rgb)
+    #↑image_rgbは不要になるのでrender無料枠でやりくりするために消す
+    del image_rgb #numpyの配列を削除する
 
     # 眼鏡画像が存在するか確認
     if not os.path.exists(glasses_image_path):
@@ -593,6 +598,12 @@ def glasses_tryon():
             filename = secure_filename(file.filename)
             upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(upload_path)
+
+            #renderの無料枠だとメモリ512MBしか使えなくてオーバーするので、アップロード直後にリサイズして、ファイルサイズを落とす
+            from PIL import Image
+            with Image.open(upload_path) as img:
+                img.thumbnail((1000, 1000)) # アスペクト比維持して最大1000pxに
+                img.save(upload_path)
 
             # 1. ここでまずランドマークを取得する
             landmarks = get_landmarks(upload_path)
