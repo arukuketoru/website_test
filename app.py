@@ -1,6 +1,7 @@
 #flaskを使用した簡易的なウェブサイト(とりあえず機能追加するときはライブラリのバージョン確認必須)
 #the code making simple website with flask
 #webサイトの練習用(眼鏡は公開するかも)
+#gitのリポジトリ更新したら、renderも自動的にdeployされる
 
 """
 requirments.txtの中身はこんな感じ(何か追加するときはライブラリの依存関係に注意)
@@ -172,6 +173,7 @@ def parse_scholar_html(html_content):
     return results
 
 #Webサイトのルート設定
+#home.htmlに対する記述
 @app.route('/')
 def home():
     return render_template('home.html')
