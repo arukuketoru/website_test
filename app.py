@@ -1,10 +1,9 @@
-#flaskを使用した簡易的なウェブサイト(とりあえず機能追加するときはライブラリのバージョン確認必須)
-#the code making simple website with flask
-#webサイトの練習用(眼鏡は公開するかも)
-#gitのリポジトリ更新したら、renderも自動的にdeployされる
+#the code making simple website with flask(とりあえず機能追加するときはライブラリのバージョン確認必須)
+#practicing how to build web app
+#pushing to the Git=repo triggers an automatic deployment on Render
 
 """
-requirments.txtの中身はこんな感じ(何か追加するときはライブラリの依存関係に注意)
+Here are the contents of my requirements.txt and you should pay attenton to library dependencies when you add a libraly to app.py
 
 Flask
 gunicorn
@@ -18,16 +17,14 @@ werkzeug
 """
 
 """
-依存でエラー出るし、このPCから最新のnumpy消したくないから、
-venv使って仮想環境で実行
-これで実行できる.\venv\Scripts\activate
-コマンドには python venv venv
-venvはコミットしないため、.gitignore作成
-gitとrenderの使い方→
-・git add . 全てのファイルgitに入れるための準備（ネットショッピングで購入前にカゴに入れる感じ）
-・git commit -m "explain" ここで変更内容をローカルリポジトリに記録（この状況では他の人はまだ変更されたかわからない）
-・git push origin main ローカルにコミットしたものをリモートリポジトリに保存する。
-・renderではgitに保存したら自動的に更新してdeployされるようになっている
+Since there are dependency errors and I don't want to uninstall the latest numpy 2.x from my PC, I'll use venv to run it in a virtual environment.
+"\venv\Scripts\activate"
+If you wanna use venv, run this command "python venv venv"
+The venv folder should not be committed so I created ".gitignore" file
+Workflow for deploying from Git to Render (command example)
+    git add : Stage all changes. (It's like putting items in a shopping cart before checkout on shopping site.)
+    git commit -m "explain" : Record the changes to the local repository. (At this stage, others cannot see your changes yet.)
+    git push origin main : Upload the local commits to the 'main' branch of the remote repository. Then, Render detects the push and automatically triggers a new deployment.
 """
 
 from flask import Flask, render_template, request, jsonify, url_for #Third-party library of web flamework
@@ -37,22 +34,24 @@ import random
 import time
 import sqlite3 #データベース用
 import datetime
-#以下眼鏡実装用に追加(ライブラリのバージョンが厄介)(依存関係多すぎてやばい)
+#以下眼鏡AI実装用に追加(ライブラリのバージョンが厄介)(依存関係多すぎてやばい)
 import os
 import cv2
-import numpy as np #numpy2.x系だと動かない(mediapipeやtensorflowが動かないから)
+import numpy as np #numpy2.x系だとダメ(mediapipeやtensorflowが動かないから)
 import mediapipe as mp
 #print("MediaPipeの位置:", mp.__file__)#ファイル名ダブりでエラーが出たのかの確認
 #print("中身の確認:", dir(mp))#バージョン違うかの確認
 from PIL import Image
 from werkzeug.utils import secure_filename
 
-#データベース作成(キャッシュ用)
-#カレントディレクトリに拡張子.dbを作成
-#すでにあればそれにアクセスできる
+#Set up a cache database
+#This code creates '.db' extension file in the current directory
+#Once it is in there, this script accesses the DB
 DATABASE = 'scholar_cache.db'
-# キャッシュの有効期間
-CACHE_DURATION_HOURS = 24 #24時間保持
+#Cache TTL (Time To Live)
+CACHE_DURATION_HOURS = 24 #TTL: 24 hours
+
+"""Now tansreat"""
 
 def get_db_connection():
     conn = sqlite3.connect(DATABASE) #データベースに接続し接続オブジェクトを返す
@@ -406,13 +405,13 @@ def get_elements_data():
         {"no": 103, "sym": "Lr", "name": "ローレンシウム", "col": 17, "row": 10, "cat": "actinoid", "desc": "最も重いアクチノイド。"}
     ]
 
-    # ソート（多分いらん）
+    # ソート（もともとソート済みだけど一応入れる）
     elements.sort(key=lambda x: x['no'])
 
     return elements
 
 
-#以下眼鏡用に作成(後日解説入れる)
+#以下眼鏡用にgeimineで作成(後日解説入れる)
 # アップロード画像の保存先
 #UPLOAD_FOLDER = 'static/uploads'
 
@@ -586,7 +585,6 @@ def analyze_face_shape(landmarks):
             return ("逆三角形", "oval.png")  # 丸みのある眼鏡
         else:
             return ("四角顔", "round.png")    # 柔らかい印象の眼鏡
-
 
 @app.route('/glasses-tryon', methods=['GET', 'POST'])
 def glasses_tryon():
