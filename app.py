@@ -54,9 +54,9 @@ CACHE_DURATION_HOURS = 24 #TTL: 24 hours
 """Now tansreat"""
 
 def get_db_connection():
-    conn = sqlite3.connect(DATABASE) #データベースに接続し接続オブジェクトを返す
-    conn.row_factory = sqlite3.Row #結果を辞書形式で取得できるようにする
-    return conn
+    con = sqlite3.connect(DATABASE) #データベースに接続し接続オブジェクトを返す
+    con.row_factory = sqlite3.Row #結果を辞書形式で取得できるようにする
+    return con
 
 def init_db():
     conn = get_db_connection()
