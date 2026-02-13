@@ -29,7 +29,7 @@ Workflow for deploying from Git to Render (command example)
 
 from flask import Flask, render_template, request, jsonify, url_for #Third-party library of web flamework
 from bs4 import BeautifulSoup #A tool that parses "tag soup" into a clean structure
-import requests
+import requests 
 import random
 import time
 import sqlite3 #データベース用
@@ -59,17 +59,17 @@ def get_db_connection():
     return con
 
 def init_db():
-    conn = get_db_connection()
+    con = get_db_connection()
     # テーブルを作成（キーワード、HTMLデータ、保存日時を記録）
-    conn.execute('''
+    con.execute('''
         CREATE TABLE IF NOT EXISTS cache (
             keyword TEXT PRIMARY KEY,
             html_content TEXT NOT NULL,
             timestamp DATETIME NOT NULL
         )
     ''')
-    conn.commit()
-    conn.close()
+    con.commit()
+    con.close()
 
 print("--- MediaPipe Debug Info ---")
 print(f"Version: {mp.__version__}")
@@ -602,7 +602,8 @@ def glasses_tryon():
             #renderの無料枠だとメモリ512MBしか使えなくてオーバーするので、アップロード直後にリサイズして、ファイルサイズを落とす
             from PIL import Image
             with Image.open(upload_path) as img:
-                img.thumbnail((1000, 1000)) # アスペクト比維持して最大1000pxに
+                #img.thumbnail((1000, 1000)) # アスペクト比維持して最大1000pxに
+                img.thumbnail((700, 700)) # アスペクト比維持して最大700pxに
                 img.save(upload_path)
 
             # 1. ここでまずランドマークを取得する
@@ -660,7 +661,7 @@ def apply_glasses():
         return jsonify({"success": False, "error": "合成に失敗しました"})
 
 #デバッグ
-if __name__ == '__main__':
+if __name__ == '__main__':#このファイルがスクリプトとして実行された時にtrueになる。
     # 開発用サーバーを起動 (外部用ではない)
-    app.run(debug=True)#bebug on コード変更時に自動で再起動
+    app.run(debug=True)#debug on コード変更時に自動で再起動
     #app.run(debug=False)
