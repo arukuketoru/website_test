@@ -32,7 +32,7 @@ from bs4 import BeautifulSoup #A tool that parses "tag soup" into a clean struct
 import requests 
 import random
 import time
-import sqlite3 #データベース用
+import sqlite3 #for database
 import datetime
 #以下眼鏡AI実装用に追加(ライブラリのバージョンが厄介)(依存関係多すぎてやばい)
 import os
@@ -54,9 +54,9 @@ CACHE_DURATION_HOURS = 24 #TTL: 24 hours
 """Now tansreat"""
 
 def get_db_connection():
-    con = sqlite3.connect(DATABASE) #データベースに接続し接続オブジェクトを返す
-    con.row_factory = sqlite3.Row #結果を辞書形式で取得できるようにする
-    return con
+    con = sqlite3.connect(DATABASE) #connct this database and return object of conection database
+    con.row_factory = sqlite3.Row #To get result as dict
+    return con #return dic type
 
 def init_db():
     con = get_db_connection()
