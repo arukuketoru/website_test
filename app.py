@@ -1,10 +1,11 @@
-#the code making simple website with flask(とりあえず機能追加するときはライブラリのバージョン確認必須)
-#practicing how to build web app
-#pushing to the Git=repo triggers an automatic deployment on Render
+# the code making simple website with flask (Flaskを使った簡易的なウェブサイトを作るコード)
+# when you add a new feature you need to check the library versions (とりあえず機能追加するときはライブラリのバージョン確認必須)
+# practicing how to build web app (ウェブアプリケーションの作り方を学ぶための練習用)
+# pushing to the Git=repo triggers an automatic deployment on Render (gitリポジトリにプッシュするとRenderで自動的にデプロイされる)
 
 """
 Here are the contents of my requirements.txt and you should pay attenton to library dependencies when you add a libraly to app.py
-
+(requirements.txtに記載の内容をここに記載している. また新しいライブラリを追加する際は, ライブラリの依存関係に注意！！)
 Flask
 gunicorn
 requests
@@ -17,10 +18,10 @@ werkzeug
 """
 
 """
-Since there are dependency errors and I don't want to uninstall the latest numpy 2.x from my PC, I'll use venv to run it in a virtual environment.
+Since there are dependency errors and I don't want to uninstall the latest numpy 2.x from my PC, I use venv to run it in a virtual environment.
 "\venv\Scripts\activate"
 If you wanna use venv, run this command "python venv venv"
-The venv folder should not be committed so I created ".gitignore" file
+The venv folder should not be committed so I created ".gitignore" file.
 Workflow for deploying from Git to Render (command example)
     git add : Stage all changes. (It's like putting items in a shopping cart before checkout on shopping site.)
     git commit -m "explain" : Record the changes to the local repository. (At this stage, others cannot see your changes yet.)
@@ -59,8 +60,8 @@ def get_db_connection():
     return con #return dic type
 
 def init_db():
-    con = get_db_connection()
-    # テーブルを作成（キーワード、HTMLデータ、保存日時を記録）
+    con = get_db_connection() # make instance and connect to the database
+    # make database table {keyword, html_content, timestamp}
     con.execute('''
         CREATE TABLE IF NOT EXISTS cache (
             keyword TEXT PRIMARY KEY,
@@ -68,8 +69,8 @@ def init_db():
             timestamp DATETIME NOT NULL
         )
     ''')
-    con.commit()
-    con.close()
+    con.commit() # commit the changes to the database (save the changes)
+    con.close() # close database
 
 print("--- MediaPipe Debug Info ---")
 print(f"Version: {mp.__version__}")
@@ -78,16 +79,18 @@ print(f"Has solutions: {hasattr(mp, 'solutions')}")
 print("----------------------------")
 
 # Flaskアプリケーションの初期化(インスタンス作成)
+# Initialization of Flask application (creating an instance)
 app = Flask(__name__)
 # アプリケーション起動時にdbを初期化
+# Initialize the database when the application starts
 with app.app_context():
     init_db()
 
 
 # --- 検索ロジックを関数として定義 ---
+# define search logic as a function
 def search_scholar(keywords):
     search_query = " ".join(keywords.split())
-
     conn = get_db_connection()
     current_time = datetime.datetime.now()
 
