@@ -19,6 +19,7 @@ werkzeug
 
 """
 Since there are dependency errors and I don't want to uninstall the latest numpy 2.x from my PC, I use venv to run it in a virtual environment.
+(依存関係のエラーがあって, 自分のPCから最新版のnumpy2.x系を削除したくないため, 仮想環境で動かせるvenvの環境を使用する.)
 "\venv\Scripts\activate"
 If you wanna use venv, run this command "python venv venv"
 The venv folder should not be committed so I created ".gitignore" file.
