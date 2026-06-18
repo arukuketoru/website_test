@@ -7,9 +7,11 @@ env/
 __pycache__/
 *.pyc
 
-# データベースファイルを無視（必要に応じて）
-scholar_cache.db
+# データベースファイルを無視
+*.db
 
 # アップロードされた画像を無視（個人の顔写真を上げないため）
 static/uploads/*
 !static/uploads/.gitkeep
+
+test_pic.jpg
